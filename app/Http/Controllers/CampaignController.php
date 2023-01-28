@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\Campaign;
+use App\Models\Category;
 use Illuminate\Http\Request;
 
 class CampaignController extends Controller
@@ -15,7 +16,8 @@ class CampaignController extends Controller
     public function index()
     {
         $campaigns = Campaign::all();
-        return view('campaign.index', compact('campaigns'));
+        $categories = Category::all();
+        return view('campaign.index', compact(['campaigns', 'categories']));
     }
 
     /**

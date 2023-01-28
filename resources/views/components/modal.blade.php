@@ -1,7 +1,6 @@
 <div {{ $attributes->merge([
         'class' => 'modal fade',
         'id' => 'modal-form',
-        'tabindex' => '-1',
         'aria-labelledby' => 'exampleModalLabel',
         'aria-hidden' => 'true'
     ]) }}>
