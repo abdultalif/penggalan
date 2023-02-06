@@ -22,6 +22,7 @@
             time: 'far fa-clock'
         },
         format: 'YYYY-MM-DD HH:mm',
+        // id untuk berubah ke bahasa indonesia
         locale: 'id'
     });
 </script>

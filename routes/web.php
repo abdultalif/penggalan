@@ -41,7 +41,7 @@ Route::group([
     'middleware' => 'role:admin'
 ], function () {
     Route::resource('/category', CategoryController::class);
-    Route::resource('/campaign', CampaignController::class);
+    Route::resource('/campaign', CampaignController::class)->except('create', 'edit');
 });
 
 Route::group([

@@ -13,16 +13,13 @@
             <x-slot name="header">
                 <button class="btn btn-primary" onclick="addForm(`{{ route('campaign.store') }}`)"><i class="fas fa-plus-circle"></i> Tambah</button>
             </x-slot>
-            <form action="" class="d-flex justify-content-between">
-                <x-dropdown-table />
-                <x-filter-table />
-            </form>
+
             <x-table>
                 <x-slot name="thead">
                     <tr>
                         <th widht="5%">No</th>
                         <th></th>
-                        <th width="50%">Deskripsi</th>
+                        <th>Deskripsi</th>
                         <th>Tgl Publish</th>
                         <th>Status</th>
                         <th>Author</th>
@@ -31,9 +28,6 @@
                         </th>
                     </tr>
                 </x-slot>
-                <tr>
-                    <td></td>
-                </tr>
             </x-table>
         </x-card>
     </div>
@@ -65,7 +59,7 @@
     </div>
     <div class="form-group">
         <label for="">Deskripsi Singkat</label>
-        <textarea name="short_description" id="short_description" rows="3" class="form-control datepicker"></textarea>
+        <textarea name="short_description" id="short_description" rows="3" class="form-control"></textarea>
     </div>
     <div class="form-group">
         <label for="">Konten</label>
@@ -87,7 +81,7 @@
         <div class="col-lg-6">
             <div class="form-group">
                 <label for="">Status</label>
-                <select name="" id="" class="form-control">
+                <select name="status" id="status" class="form-control">
                     <option disabled selected>Pilih Status</option>
                     <option value="publish">Publish</option>
                     <option value="archived">Diarsipkan</option>
@@ -118,7 +112,7 @@
 
     <div class="form-group">
         <label for="note">Tulis ajakan singkat untuk mengajak orang berdonasi</label>
-        <textarea name="note" id="note" class="form-control"></textarea>
+        <textarea name="note" id="note" class="form-control" rows="3"></textarea>
     </div>
 
     <div class="row">
@@ -158,20 +152,155 @@
 
     <x-slot name="footer">
         <button type="button" class="btn btn-secondary" data-dismiss="modal">Batal</button>
-        <button type="submit" class="btn btn-primary">Simpan</button>
+        <button type="button" onclick="submitForm(this.form)" class="btn btn-primary">Simpan</button>
     </x-slot>
 </x-modal>
 @endsection
 
-@include('include.datatable')
-@include('include.select2')
-@include('include.summernote')
-@include('include.datepicker')
+@includeIf('include.datatable')
+@includeIf('include.select2')
+@includeIf('include.summernote')
+@includeIf('include.datepicker')
 
 @push('script')
 <script>
-    function addForm(url) {
-        $('#modal-form').modal('show');
+    let modal = '#modal-form';
+    let table;
+
+    $('.table').DataTable();
+
+    function addForm(url, title = 'Tambah Projek') {
+        // Untuk menampilkan modal
+        $(modal).modal('show');
+        // untuk menampilkan tulisan di header
+        $(`${modal} .modal-title`).text(title);
+        // mengirim semua data kedalam controller melalui action
+        $(`${modal} form`).attr('action', url);
+
+        resetForm(`${modal} form`);
+
+    }
+
+    function editForm(url, title = 'Edit Projek') {
+        $.get(url)
+            .done(response => {
+                // Untuk menampilkan modal
+                $(modal).modal('show');
+                // untuk menampilkan tulisan di header
+                $(`${modal} .modal-title`).text(title);
+                // mengirim semua data kedalam controller melalui action
+                $(`${modal} form`).attr('action', url);
+                $(`${modal} [name=_method]`).val('post');
+
+                resetForm(`${modal} form`);
+                loopForm(response.data);
+            })
+            .fail(errors => {
+                alert('Tidak dapat menampilkan data');
+                return;
+            })
+    }
+
+    function submitForm(originalForm) {
+        $.post({
+                url: $(originalForm).attr('action'),
+                data: new FormData(originalForm),
+                dataType: 'json',
+                contentType: false,
+                cache: false,
+                processData: false
+            })
+            .done(response => {
+                $(modal).modal('hide');
+                showAlert(response.massage, 'success');
+                table.ajax.reload();
+            })
+            .fail(errors => {
+                if (errors.status == 422) {
+                    loopErrors(errors.responseJSON.errors);
+                    return
+                }
+
+                showAlert(errors.responseJSON.errors, 'danger');
+            });
+    }
+
+    function deleteData(url) {
+        if (confirm('Yakin data akan dihapus?')) {
+            $.post(url, {
+                    '_method': 'delete'
+                })
+                .done(response => {
+                    showAlert(response.massage, 'success');
+                    table.ajax.reload();
+                })
+                .fail(errors => {
+                    showAlert('Tidak dapat menghapus data');
+                    return;
+                })
+        }
+    }
+
+    function resetForm(selector) {
+        $(selector)[0].reset();
+
+        $('.select2').trigger('change');
+        $('form-control, .custom-select, .custom-checkbox, .custom-radio, .select2').removeClass('is-invalid');
+        $('.invalid-feedback').remove();
+    }
+
+    function loopForm(originalForm) {
+        for (field in originalForm) {
+            if ($(`[name=${filed}]`).attr('type') != 'file') {
+                if ($(`[name=${field}]`).hasClass('summernote')) {
+                    $(`[name=${field}]`).summernote('code', originalForm[field]);
+                }
+
+                $(`[name=${field}]`).val(originalForm[filed]);
+                $('select').trigger('change');
+            }
+        }
+    }
+
+    function loopErrors(errors) {
+        $('.invalid-feedback').remove();
+
+        if (errors == undefined) {
+            return;
+        }
+
+        for (error in errors) {
+            $(`[name=${error}]`).addClass('is-invalid');
+
+            if ($(`[name=${error}]`).hasClass('select2')) {
+                $(`<span class="error invalid-feedback">${errors[error][0]}</span>`)
+                    .insertAfter($(`[name=${error}]`).next());
+            } else if ($(`[name=${error}]`).hasClass('summernote')) {
+                $('.note-editor').addClass('is-invalid');
+                $(`<span class="error invalid-feedback">${errors[error][0]}</span>`)
+                    .insertAfter($(`[name=${error}]`).next());
+            } else if ($(`[name=${error}]`).hasClass('custom-control-input')) {
+                $(`<span class="error invalid-feedback">${errors[error][0]}</span>`)
+                    .insertAfter($(`[name=${error}]`).next());
+            } else {
+                if ($(`[name=${error}]`).length == 0) {
+                    $(`[name="${error}[]"]`).addClass('is-invalid');
+                    $(`<span class="error invalid-feedback">${errors[error][0]}</span>`)
+                        .insertAfter($(`[name="${error}[]"]`).next());
+                } else {
+                    if ($(`[name=${error}]`).next().hasClass('input-group-append') || $(`[name=${error}]`).next().hasClass('input-group-prepend')) {
+                        $(`<span class="error invalid-feedback">${errors[error][0]}</span>`)
+                            .insertAfter($(`[name=${error}]`).next());
+                        $('.input-group-append .input-group-text').css('border-radius', '0 .25rem .25rem 0');
+                        $('.input-group-prepend').next().css('border-radius', '0 .25rem .25rem 0');
+                    } else {
+                        $(`<span class="error invalid-feedback">${errors[error][0]}</span>`)
+                            .insertAfter($(`[name=${error}]`));
+                    }
+                }
+
+            }
+        }
     }
 </script>
 @endpush

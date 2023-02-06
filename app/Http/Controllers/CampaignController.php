@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Models\Campaign;
 use App\Models\Category;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Validator;
 
 class CampaignController extends Controller
 {
@@ -38,7 +39,24 @@ class CampaignController extends Controller
      */
     public function store(Request $request)
     {
-        //
+        // validate untuk ajax menggunakan validator
+        $validator = Validator::make($request->all(), [
+            'title' => 'required|min:8',
+            'categories' => 'required|array',
+            'short_description' => 'required',
+            'body' => 'required|min:8',
+            'publish_date' => 'required|date_format:Y-m-d H:i',
+            'status' => 'required|in:publish,archived',
+            'goal' => 'required',
+            'end_date' => 'required|date_format:Y-m-d H:i',
+            'note' => 'nullable|required',
+            'receiver' => 'required',
+            'path_image' => 'required|mimes:png,jpg,jpeg|max:2048'
+        ]);
+
+        if ($validator->fails()) {
+            return response()->json(['errors' => $validator->errors()], 422);
+        }
     }
 
     /**
