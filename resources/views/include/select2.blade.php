@@ -13,7 +13,7 @@
 <script>
     $('.select2').select2({
         theme: 'bootstrap4',
-        placeholder: 'Pilih salah satu',
+        placeholder: 'Pilih kategori',
         closeOnSelect: true,
         allowClear: true
     });

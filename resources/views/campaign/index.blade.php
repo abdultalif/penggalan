@@ -48,7 +48,7 @@
         <div class="col-lg-6">
             <div class="form-group">
                 <label for="categories">Kategori</label>
-                <select name="categories" id="categories" class="form-control select2">
+                <select name="categories[]" id="categories" class="form-control select2" multiple>
                     <option value="">Pilih Kategori</option>
                     @foreach ($categories as $category)
                     <option value="{{ $category->id }}">{{ $category->name }}</option>
@@ -94,7 +94,7 @@
         <div class="col-lg-6">
             <div class="form-group">
                 <label for="">Goal</label>
-                <input type="text" name="goal" id="goal" class="form-control" onkeyup="format_uang(this)">
+                <input type="text" name="goal" id="goal" class="form-control">
             </div>
         </div>
         <div class="col-lg-6">
@@ -245,7 +245,7 @@
         $(selector)[0].reset();
 
         $('.select2').trigger('change');
-        $('form-control, .custom-select, .custom-checkbox, .custom-radio, .select2').removeClass('is-invalid');
+        $('.form-control, .custom-select, [type=radio], [type=checkbox], [type=file], .select2, .note-editor').removeClass('is-invalid');
         $('.invalid-feedback').remove();
     }
 
@@ -260,6 +260,30 @@
                 $('select').trigger('change');
             }
         }
+    }
+
+    function showAlert(message, type) {
+        let title = '';
+        switch (type) {
+            case 'success':
+                title = 'Success';
+                break;
+            case 'danger':
+                title = 'Failed';
+                break;
+            default:
+                break;
+        }
+
+        $(document).Toasts('create', {
+            class: `bg-${type}`,
+            title: title,
+            body: message
+        });
+
+        setTimeout(() => {
+            $('.toasts-top-right').remove();
+        }, 3000);
     }
 
     function loopErrors(errors) {

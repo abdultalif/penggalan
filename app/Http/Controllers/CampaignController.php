@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Models\Campaign;
 use App\Models\Category;
+use Illuminate\Support\Str;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Validator;
 
@@ -51,12 +52,22 @@ class CampaignController extends Controller
             'end_date' => 'required|date_format:Y-m-d H:i',
             'note' => 'nullable|required',
             'receiver' => 'required',
-            'path_image' => 'required|mimes:png,jpg,jpeg|max:2048'
+            'path_image' => 'required'
         ]);
 
         if ($validator->fails()) {
             return response()->json(['errors' => $validator->errors()], 422);
         }
+
+        $data = $request->except('path_image', 'categories');
+        $data['slug'] = Str::slug($request->title);
+        $data['path_image'] = upload('campaign', $request->file('path_image'), 'campaign');
+        $data['user_id'] = auth()->id();
+
+        $campaign = Campaign::create($data);
+        $campaign->category_campaign()->attach($request->categories);
+
+        return response()->json(['data' => $campaign, 'message' => 'Projek berhasil ditambahkan']);
     }
 
     /**
